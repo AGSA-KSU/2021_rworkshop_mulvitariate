@@ -7,5 +7,3 @@ This is a public GitHub repository to share the files needed for the **Kansas St
 This repository contains the following sub-folders:  
 - **data**: contains the data file that will be used for the analysis.  
 - **markdown**: contains the R markdown files with the code for the workshop. At download, only partially filled code will be shared, with completely filled scripts shared after the workshop.  
-
-## Include here an image from the analysis!  
