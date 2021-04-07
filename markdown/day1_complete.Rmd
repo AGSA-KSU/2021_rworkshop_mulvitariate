@@ -1,0 +1,46 @@
+---
+title: "day1_complete"
+output: html_document
+---
+
+# 1. Setup  
+```{r Installing and loading packages}
+#install.packages("easypackages")
+library(easypackages)
+
+packages("janitor")
+packages("tidyverse")
+packages("factoextra")
+
+```
+
+```{r reading data}
+mvadf <- read_csv("../data/data_R_MVA.csv")
+```
+
+# 2. Wrangling  
+```{r print mvadf}
+mvadf
+```
+
+```{r mvadf summary}
+mvadf %>%
+  summary()
+```
+
+```{r light wrangling}
+mvadf_w <- mvadf %>%
+  clean_names() %>%
+  mutate(across(where(is.character), factor))
+
+mvadf_w
+```
+# 3. EDA  
+
+
+# 4. PCoA  
+
+# 5. NMDS  
+
+# 6. k-means  
+
