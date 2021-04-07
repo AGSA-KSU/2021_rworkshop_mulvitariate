@@ -86,7 +86,7 @@ theme_set(theme_bw()+
 ```
 
 ```{r mvadf}
-mvadf <- read_csv("../data/data_R_MVA.csv")
+mvadf <- read_csv()
 ```
 
 # 2. Wrangling  
@@ -113,6 +113,7 @@ mvadf_w <- mvadf %>%
 
 mvadf_w
 ```
+
 # 3. EDA  
 How are variables related? Any strong correlations that we should watch out for?  
 ```{r correlation matrix}
@@ -165,7 +166,7 @@ Let's select a few variables to run some tests.
 Two uncorrelated variables:
 ```{r uncorrelated}
 mvadf_w %>%
-  ggplot(aes(x=vpd_pre, y=rad_2))+
+  ggplot(aes(x=, y=))+
   geom_point()+
   geom_smooth(method="lm")
 ```
@@ -173,7 +174,7 @@ mvadf_w %>%
 Two correlated variables:
 ```{r correlated}
 mvadf_w %>%
-  ggplot(aes(x=vpd_pre, y=tm_pre))+
+  ggplot(aes(x=, y=))+
   geom_point()+
   geom_smooth(method="lm")
 
@@ -181,11 +182,7 @@ mvadf_w %>%
 
 Now let's fit some models with one or two uncorrelated and correlated variables explaining yield and see what happens.
 ```{r gy ~ vpd_pr}
-lm_vpd <- lm(gy ~ vpd_pre,
-   data=mvadf_w) %>%
-  tidy() %>%
-  filter(term!="(Intercept)") %>%
-  mutate(mod="lm_vpd")
+lm_vpd 
 
 lm_vpd
 
@@ -202,11 +199,7 @@ lm_tm
 ```
 
 ```{r gy ~ vpd_pre + rad_2}
-lm_vpd.rad <- lm(gy ~ vpd_pre + rad_2,
-   data=mvadf_w) %>%
-  tidy() %>%
-  filter(term!="(Intercept)") %>%
-  mutate(mod="lm_2var.uncor")
+lm_vpd.rad 
 
 lm_vpd.rad
 
@@ -284,8 +277,7 @@ Some analysis do the normalization for you (like PCA), and other don't (like k-m
 
 Since both PCA and k-means only take numerical variables, let's select them now.  
 ```{r selecting only numerical vars}
-mvadf_wn <- mvadf_w %>%
-  dplyr::select(where(is.numeric), -gy) 
+mvadf_wn 
 
 mvadf_wn
 ```
@@ -308,15 +300,12 @@ knitr::include_graphics("https://builtin.com/sites/default/files/inline-images/P
 ```
 
 ```{r pca model}
-mod_pca <- prcomp(mvadf_wn, scale. = T) 
-
-summary(mod_pca)
+mod_pca 
 ```
 
 ```{r pca checking number of components}
 # Scree plot
-fviz_eig(mod_pca,
-         addlabels=TRUE)
+
 
 ```
 PCs 1 and 2 explain ~27% and ~14% (41%) of total variance.
@@ -352,7 +341,7 @@ mod_pca$rotation %>%
 
 Which variables contributed most to PC1, regardless of direction?
 ```{r variables contributing to PC1}
-fviz_contrib(mod_pca, choice = "var", axes = 1)
+
 ```
 Let's the eigenvectors for both PCs 1 and 2 variables:
 ```{r pca variable contribution }
@@ -367,7 +356,7 @@ The longer is the eigenvector for a given variable, the more important it is tow
 
 Let's plot PC1 vs PC2 scores, look for any groupings.
 ```{r PC1 vs PC2}
-fviz_pca_ind(mod_pca)
+
 
 ```
 No clear groups.
@@ -388,22 +377,18 @@ What now?
 Let's add the first 5 PCs to our original dataset and run a regression.
 ```{r pca scores}
 # Extract first 5 PCs scores
-pca_scores <- mod_pca$x %>%
-  as.data.frame() %>%
-  dplyr::select(PC1:PC5)
+pca_scores 
 
 pca_scores
 ```
 
 ```{r pca regression}
 # Adding PCs 1-5 scores to original data set
-mvadf_wpostpca <- mvadf_w %>%
-  bind_cols(pca_scores)
+mvadf_wpostpca 
 
 # Regression of yield ~ PCs
 
-lm_pca <- lm(gy ~ PC1 + PC2 + PC3 + PC4 + PC5,
-             data=mvadf_wpostpca)
+lm_pca 
 
 # Summary  
 summary(lm_pca)
@@ -414,14 +399,10 @@ vif(lm_pca)
 
 ```{r pca regression plots}
 # Plotting yield vs PC1
-ggplot(mvadf_wpostpca, aes(x=PC1, y=gy))+
-  geom_point()+
-  geom_smooth(method="lm")
+
 
 # Plotting yield vs PC3
-ggplot(mvadf_wpostpca, aes(x=PC3, y=gy))+
-  geom_point()+
-  geom_smooth(method="lm")
+
 
 ```
 
@@ -466,9 +447,7 @@ Let's try 4.
 mvadf_wnn <- mvadf_wn %>%
   mutate(across(where(is.numeric), ~scale(.x))) 
 
-mod_km <- kmeans(mvadf_wnn, 
-                 centers= 4,
-                 nstart=10)
+mod_km
 
 mod_km
 ```
@@ -477,23 +456,12 @@ Since the choice of k can be subjective, we will need to find an objective way t
 
 ```{r choosing k}
 # Total error x k
-fviz_nbclust(mvadf_wnn, 
-             method="wss",
-             k.max=10,
-             FUNcluster=kmeans) 
+
 
 # Gap-stat x k
-fviz_nbclust(mvadf_wnn, 
-             method="gap_stat",
-             k.max=10,
-             FUNcluster=kmeans) 
 
 
 # Silhouette width
-fviz_nbclust(mvadf_wnn, 
-             method="s",
-             k.max=10,
-             FUNcluster=kmeans) 
 
 ```
 gap-stat: k=8
@@ -532,8 +500,8 @@ We could actually run ANOVA models for each original variable of the form
 and extract cluster mean and pairwise comparison to understand what variables had significant differences among clusters.
 
 ```{r kmeans PCA plot}
-fviz_cluster(mod_km2, 
-             data = mvadf_wnn)
+
+
 ```
 Notice how, behind the scenes, the fviz_cluster function ran a PCA and is showing us a plot with PCs 1 and 2 on the axis (same result as we obtained on the PCA analysis).  
 
