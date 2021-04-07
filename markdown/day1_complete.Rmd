@@ -1,0 +1,29 @@
+---
+title: "day1_complete"
+output: html_document
+---
+
+# 1. Setup  
+```{r Installing and loading packages, warning=F, message=F}
+install.packages("easypackages")
+library(easypackages)
+
+package("tidyverse")
+package("factoextra")
+
+```
+
+```{r reading data}
+
+```
+
+# 2. Wrangling
+
+# 3. EDA  
+
+# 4. PCoA  
+
+# 5. NMDS  
+
+# 6. k-means  
+
