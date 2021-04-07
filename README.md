@@ -2,7 +2,7 @@
 
 Hey there!  
 
-This is a public GitHub repository to share the files needed for the **Kansas State University 2021 AGSA R Workshop - Multivariate analysis**, taught on April 7th and 8th 2021 by @leombastos and @adriancorrendo.    
+This is a public GitHub repository to share the files needed for the **Kansas State University 2021 AGSA R Workshop - Multivariate analysis**, taught on April 7th and 8th 2021 by [@leombastos](https://github.com/leombastos) and [@adriancorrendo](https://github.com/adriancorrendo).    
 
 This repository contains the following sub-folders:  
 - **data**: contains the data file that will be used for the analysis.  
