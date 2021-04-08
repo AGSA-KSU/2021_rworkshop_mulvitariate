@@ -2,6 +2,32 @@
 title: "day1_complete"
 output: html_document
 ---
+Quick initial notes:
+- Let us know in the chat if you are having issues installing the packages.
+
+- The workshop today will run from 2h, and it will be recorded and made available later on the AGSA youtube channel.
+
+- The complete script will be made available later tonight on the same GitHug page shared via email earlier. 
+
+- This is an advanced workshop and assumes you already have knowledge about:
+    - RStudio projects
+    - Rmarkdown files
+    - dplyr, ggplot, pipe operator
+
+If you are not familiar with these topics, you will likely get lost. 
+Unfortunately, we won't have time to troubleshoot in those cases.
+
+We have covered these topics in previous workshops that are available on the AGSA youtube account.
+
+Having said that, please feel free to post questions related to today's topics on the chat, and Carlos will let me know of them.
+
+Before we begin:
+- Click on the TOC button on the side to help move in the code
+- Chunks:
+    - In the chunks we run code as if it were the console.
+    - You can write your own notes outside the chunks
+    - To run a piece of code, place your cursor anywhere in the chunk and press **command (or control) + Enter**.
+    - To run entire chunk, press the play button on the chunk.
 
 # Agenda  
 Today we are exploring the following topics:
