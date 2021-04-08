@@ -1,11 +1,10 @@
 ---
 title: "day1_complete"
 output:
-  html_document: 
-    keep_md: yes
-    toc: yes
+  github_document: 
+    toc: true
     #toc_float: true
-    number_sections: yes
+    number_sections: true
 ---
 
 # Quick initial notes  
