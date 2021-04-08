@@ -6,23 +6,6 @@ output:
     #toc_float: true
     number_sections: true
 ---
-```{r echo=FALSE}
-library(htmltools)
-knitr::opts_chunk$set(
-  fig.align = "center"
-)
-knitr::knit_hooks$set(imgcenter = function(before, options, envir){
-  if (before) {
-    HTML("<p align='center'>")
-  } else {
-    HTML("</p>")
-  }
-})
-
-knitr::opts_chunk$set(fig.align = "center", imgcenter = T)
-
-```    
-
 
 # Quick initial notes  
 

@@ -131,8 +131,6 @@ relationship approach.
 
 # 4 Setup
 
-<p align="center">
-
 ``` r
 #install.packages("easypackages")
 library(easypackages)
@@ -151,18 +149,11 @@ theme_set(theme_bw()+
                   strip.text = element_text(face = "bold", size=10)))
 ```
 
-</p>
-<p align="center">
-
 ``` r
 mvadf <- read_csv("../data/data_R_MVA.csv")
 ```
 
-</p>
-
 # 5 Wrangling
-
-<p align="center">
 
 ``` r
 mvadf
@@ -188,11 +179,7 @@ mvadf
     ## #   Rad_3 <dbl>, Rad_4 <dbl>, vpd_pre <dbl>, vpd_1 <dbl>, vpd_2 <dbl>,
     ## #   vpd_3 <dbl>, vpd_4 <dbl>, Q_1 <dbl>, Q_2 <dbl>, Q_3 <dbl>, Q_4 <dbl>
 
-</p>
-
 The data set contains categorical and numerical columns.
-
-<p align="center">
 
 ``` r
 mvadf %>%
@@ -277,16 +264,12 @@ mvadf %>%
     ##  3rd Qu.:0.5235  
     ##  Max.   :0.6975
 
-</p>
-
 Let’s transform character variables into factor,
 
 AND
 
 select some numerical variables to continue our analysis (precip,
 temperature, radiation, and vapor pressure deficit).
-
-<p align="center">
 
 ``` r
 mvadf_w <- mvadf %>%
@@ -315,13 +298,10 @@ mvadf_w
     ## #   rad_3 <dbl>, rad_4 <dbl>, vpd_pre <dbl>, vpd_1 <dbl>, vpd_2 <dbl>,
     ## #   vpd_3 <dbl>, vpd_4 <dbl>
 
-</p>
-
 # 6 EDA
 
 How are variables related? Any strong correlations that we should watch
-out for?  
-<p align="center">
+out for?
 
 ``` r
 # Estimating significance
@@ -339,12 +319,9 @@ mvadf_w %>%
              lab= TRUE)
 ```
 
-<img src="day1_complete_files/figure-gfm/correlation matrix-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/correlation%20matrix-1.png)<!-- -->
 
 How do variables relate to grain yield in a bivariate relationship?
-
-<p align="center">
 
 ``` r
 mvadf_w %>%
@@ -357,8 +334,7 @@ mvadf_w %>%
   ggsave("../output/gyvsall.png", width = 15, height = 15)
 ```
 
-<img src="day1_complete_files/figure-gfm/eda2-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/eda2-1.png)<!-- -->
 
 # 7 Multicollinearity
 
@@ -379,7 +355,6 @@ Multicollinearity is an issue because:
 
 Let’s select a few variables to run some tests.  
 Two uncorrelated variables:
-<p align="center">
 
 ``` r
 mvadf_w %>%
@@ -388,10 +363,9 @@ mvadf_w %>%
   geom_smooth(method="lm")
 ```
 
-<img src="day1_complete_files/figure-gfm/uncorrelated-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/uncorrelated-1.png)<!-- -->
+
 Two correlated variables:
-<p align="center">
 
 ``` r
 mvadf_w %>%
@@ -400,11 +374,10 @@ mvadf_w %>%
   geom_smooth(method="lm")
 ```
 
-<img src="day1_complete_files/figure-gfm/correlated-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/correlated-1.png)<!-- -->
+
 Now let’s fit some models with one or two uncorrelated and correlated
 variables explaining yield and see what happens.
-<p align="center">
 
 ``` r
 lm_vpd <- lm(gy ~ vpd_pre,
@@ -421,9 +394,6 @@ lm_vpd
     ##   <chr>      <dbl>     <dbl>     <dbl>    <dbl> <chr> 
     ## 1 vpd_pre   -1125.      169.     -6.64 6.96e-11 lm_vpd
 
-</p>
-<p align="center">
-
 ``` r
 lm_tm <- lm(gy ~ tm_pre,
    data=mvadf_w) %>%
@@ -438,9 +408,6 @@ lm_tm
     ##   term   estimate std.error statistic   p.value mod  
     ##   <chr>     <dbl>     <dbl>     <dbl>     <dbl> <chr>
     ## 1 tm_pre    -57.1      12.9     -4.42 0.0000116 lm_tm
-
-</p>
-<p align="center">
 
 ``` r
 lm_vpd.rad <- lm(gy ~ vpd_pre + rad_2,
@@ -458,9 +425,6 @@ lm_vpd.rad
     ## 1 vpd_pre -1161.      168.       -6.89 1.39e-11 lm_2var.uncor
     ## 2 rad_2      -3.45      1.06     -3.24 1.28e- 3 lm_2var.uncor
 
-</p>
-<p align="center">
-
 ``` r
 lm_vpd.tm <- lm(gy ~ vpd_pre + tm_pre,
    data=mvadf_w) %>%
@@ -476,9 +440,6 @@ lm_vpd.tm
     ##   <chr>      <dbl>     <dbl>     <dbl>       <dbl> <chr>      
     ## 1 vpd_pre  -1510.      294.      -5.14 0.000000374 lm_2var.cor
     ## 2 tm_pre      35.3      22.0      1.60 0.109       lm_2var.cor
-
-</p>
-<p align="center">
 
 ``` r
 lm_vpd %>%
@@ -499,8 +460,7 @@ lm_vpd %>%
   facet_wrap(~term, scales = "free_y")
 ```
 
-<img src="day1_complete_files/figure-gfm/Checking multicollinearity-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/Checking%20multicollinearity-1.png)<!-- -->
 
 What has happened with tm\_pre and vpd\_pre estimates and standard error
 when modeled i) alone, or with another uncorrelated variable vs. ii)
@@ -508,7 +468,6 @@ with another correlated variable?
 
 Let’s check the variance inflation factor (VIF) of both uncorrelated and
 correlated models
-<p align="center">
 
 ``` r
 # Uncorrelated
@@ -527,8 +486,6 @@ vif(lm(gy ~ vpd_pre + tm_pre,
 
     ##  vpd_pre   tm_pre 
     ## 3.020163 3.020163
-
-</p>
 
 VIF values range from 1 to positive infinite.  
 General rule of thumb:
@@ -565,8 +522,7 @@ Some analysis do the normalization for you (like PCA), and others don’t
 normalized.
 
 Since both PCA and k-means only take numerical variables, let’s select
-them now.  
-<p align="center">
+them now.
 
 ``` r
 mvadf_wn <- mvadf_w %>%
@@ -592,8 +548,6 @@ mvadf_wn
     ## #   rad_1 <dbl>, rad_2 <dbl>, rad_3 <dbl>, rad_4 <dbl>, vpd_pre <dbl>,
     ## #   vpd_1 <dbl>, vpd_2 <dbl>, vpd_3 <dbl>, vpd_4 <dbl>
 
-</p>
-
 # 8 PCA
 
 PCA is a dimensionality reduction approach that accomodates only
@@ -611,15 +565,11 @@ PCA:
 -   Only takes predictors  
 -   Predictors need to be numerical
 
-<p align="center">
-
 ``` r
 knitr::include_graphics("https://builtin.com/sites/default/files/inline-images/Principal%20Component%20Analysis%20second%20principal.gif")
 ```
 
-<img src="https://builtin.com/sites/default/files/inline-images/Principal%20Component%20Analysis%20second%20principal.gif" style="display: block; margin: auto;" />
-</p>
-<p align="center">
+![](https://builtin.com/sites/default/files/inline-images/Principal%20Component%20Analysis%20second%20principal.gif)<!-- -->
 
 ``` r
 mod_pca <- prcomp(mvadf_wn, scale. = T) 
@@ -645,24 +595,19 @@ summary(mod_pca)
     ## Proportion of Variance 0.00059 0.00e+00
     ## Cumulative Proportion  1.00000 1.00e+00
 
-</p>
-<p align="center">
-
 ``` r
 # Scree plot
 fviz_eig(mod_pca,
          addlabels=TRUE)
 ```
 
-<img src="day1_complete_files/figure-gfm/pca checking number of components-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/pca%20checking%20number%20of%20components-1.png)<!-- -->
 
 PCs 1 and 2 explain \~27% and \~14% (41%) of total variance. Not great,
 indicates that original variables were not as highly correlated.
 
 If wanted to use enough PCs to explain 60% of total variance, how many
-would we need?  
-<p align="center">
+would we need?
 
 ``` r
 mod_pca %>%
@@ -673,16 +618,14 @@ mod_pca %>%
   geom_hline(yintercept = 60)
 ```
 
-<img src="day1_complete_files/figure-gfm/PCs to explain 60pct variance-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/PCs%20to%20explain%2060pct%20variance-1.png)<!-- -->
 
 We would need 5 PCs.  
 Normally we wish to use 2-3 PCs, but 5 is certainly better than 24
 original variables.
 
 Let’s inspect PC1.  
-What are the weights that each variable received in this PC?  
-<p align="center">
+What are the weights that each variable received in this PC?
 
 ``` r
 mod_pca$rotation %>%
@@ -694,23 +637,17 @@ mod_pca$rotation %>%
   theme(axis.text.x = element_text(angle=45, hjust=1))
 ```
 
-<img src="day1_complete_files/figure-gfm/PC1 weights-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/PC1%20weights-1.png)<!-- -->
 
 Which variables contributed most to PC1, regardless of direction?
-
-<p align="center">
 
 ``` r
 fviz_contrib(mod_pca, choice = "var", axes = 1)
 ```
 
-<img src="day1_complete_files/figure-gfm/variables contributing to PC1-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/variables%20contributing%20to%20PC1-1.png)<!-- -->
 
 Let’s check the eigenvectors for both PCs 1 and 2 variables:
-
-<p align="center">
 
 ``` r
 fviz_pca_var(mod_pca,
@@ -720,28 +657,22 @@ fviz_pca_var(mod_pca,
              )
 ```
 
-<img src="day1_complete_files/figure-gfm/pca variable contribution-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/pca%20variable%20contribution-1.png)<!-- -->
 
 The longer is the eigenvector for a given variable, the more important
 it is towards that PC.
 
 Let’s plot PC1 vs PC2 scores, look for any groupings.
 
-<p align="center">
-
 ``` r
 fviz_pca_ind(mod_pca)
 ```
 
-<img src="day1_complete_files/figure-gfm/PC1 vs PC2-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/PC1%20vs%20PC2-1.png)<!-- -->
 
 No clear groups.
 
 What if we draw ellipses by fungicide levels?
-
-<p align="center">
 
 ``` r
 fviz_pca_ind(mod_pca,
@@ -749,8 +680,7 @@ fviz_pca_ind(mod_pca,
              addEllipses = TRUE)
 ```
 
-<img src="day1_complete_files/figure-gfm/PC1 vs PC2 by fungicide-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/PC1%20vs%20PC2%20by%20fungicide-1.png)<!-- -->
 
 What did we learn?
 
@@ -761,8 +691,6 @@ What did we learn?
 What now?  
 Let’s add the first 5 PCs to our original dataset and run a regression
 versus grain yield.
-
-<p align="center">
 
 ``` r
 # Extract first 5 PCs scores
@@ -788,9 +716,6 @@ pca_scores %>%
     ##  9 -1.24   2.06   1.14   0.409 -0.528 
     ## 10 -1.92   1.29   2.45   0.324 -0.853 
     ## # … with 590 more rows
-
-</p>
-<p align="center">
 
 ``` r
 # Adding PCs 1-5 scores to original data set
@@ -837,9 +762,6 @@ vif(lm_pca)
     ## PC1 PC2 PC3 PC4 PC5 
     ##   1   1   1   1   1
 
-</p>
-<p align="center">
-
 ``` r
 # Plotting yield vs PC1
 ggplot(mvadf_wpostpca, aes(x=PC1, y=gy))+
@@ -847,7 +769,7 @@ ggplot(mvadf_wpostpca, aes(x=PC1, y=gy))+
   geom_smooth(method="lm")
 ```
 
-<img src="day1_complete_files/figure-gfm/pca regression plots-1.png" style="display: block; margin: auto;" />
+![](day1_complete_files/figure-gfm/pca%20regression%20plots-1.png)<!-- -->
 
 ``` r
 # Plotting yield vs PC3
@@ -856,8 +778,7 @@ ggplot(mvadf_wpostpca, aes(x=PC3, y=gy))+
   geom_smooth(method="lm")
 ```
 
-<img src="day1_complete_files/figure-gfm/pca regression plots-2.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/pca%20regression%20plots-2.png)<!-- -->
 
 Only PCs 1, 3, and 5 explained yield (look at which variables were most
 important to each PC for interpretation).
@@ -878,14 +799,12 @@ k-means works by
     distance
 -   using all members of a cluster, recalculates cluster mean
 -   repeats the entire process until cluster means stabilize
-    <p align='center'>
 
 ``` r
 knitr::include_graphics("https://miro.medium.com/max/960/1*KrcZK0xYgTa4qFrVr0fO2w.gif")
 ```
 
-<img src="https://miro.medium.com/max/960/1*KrcZK0xYgTa4qFrVr0fO2w.gif" style="display: block; margin: auto;" />
-</p>
+![](https://miro.medium.com/max/960/1*KrcZK0xYgTa4qFrVr0fO2w.gif)<!-- -->
 
 k-means:
 
@@ -897,14 +816,11 @@ k-means:
 k-means is useful when clusters are circular, but can fail badly when
 clusters have odd shapes or outliers.
 
-<p align="center">
-
 ``` r
 knitr::include_graphics("https://miro.medium.com/max/1400/1*oNt9G9UpVhtyFLDBwEMf8Q.png")
 ```
 
-<img src="https://miro.medium.com/max/1400/1*oNt9G9UpVhtyFLDBwEMf8Q.png" style="display: block; margin: auto;" />
-</p>
+![](https://miro.medium.com/max/1400/1*oNt9G9UpVhtyFLDBwEMf8Q.png)<!-- -->
 
 k-means does not normalize our data for us like PCA did, so we will need
 to do that before running the model.
@@ -912,8 +828,6 @@ to do that before running the model.
 Also, we need to define the number of clusters we want.  
 Any thoughts?  
 Let’s try 4.
-
-<p align="center">
 
 ``` r
 # normalizing the data
@@ -979,13 +893,9 @@ mod_km
     ## [1] "cluster"      "centers"      "totss"        "withinss"     "tot.withinss"
     ## [6] "betweenss"    "size"         "iter"         "ifault"
 
-</p>
-
 Since the choice of k can be subjective, we will need to find an
 objective way to select the value of k that most properly represents our
 dataset.
-
-<p align="center">
 
 ``` r
 # Total error x k
@@ -995,7 +905,7 @@ fviz_nbclust(mvadf_wnn,
              FUNcluster=kmeans) 
 ```
 
-<img src="day1_complete_files/figure-gfm/choosing k-1.png" style="display: block; margin: auto;" />
+![](day1_complete_files/figure-gfm/choosing%20k-1.png)<!-- -->
 
 ``` r
 # Gap-stat x k
@@ -1005,7 +915,7 @@ fviz_nbclust(mvadf_wnn,
              FUNcluster=kmeans) 
 ```
 
-<img src="day1_complete_files/figure-gfm/choosing k-2.png" style="display: block; margin: auto;" />
+![](day1_complete_files/figure-gfm/choosing%20k-2.png)<!-- -->
 
 ``` r
 # Silhouette width
@@ -1015,13 +925,10 @@ fviz_nbclust(mvadf_wnn,
              FUNcluster=kmeans) 
 ```
 
-<img src="day1_complete_files/figure-gfm/choosing k-3.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/choosing%20k-3.png)<!-- -->
 
 gap-stat: k=8  
 silhouette: k=2
-
-<p align="center">
 
 ``` r
 mod_km2 <- kmeans(mvadf_wnn, 
@@ -1075,8 +982,6 @@ mod_km2
     ## [1] "cluster"      "centers"      "totss"        "withinss"     "tot.withinss"
     ## [6] "betweenss"    "size"         "iter"         "ifault"
 
-</p>
-
 Now how can we visually inspect the resutls of k-means?  
 We can either
 
@@ -1085,8 +990,6 @@ We can either
 
 -   use a function that summarises all the original variables into PCs
     and plots the cluster ids.
-
-<p align="center">
 
 ``` r
 mvadf_wn %>%
@@ -1099,8 +1002,7 @@ mvadf_wn %>%
   facet_wrap(~name, scales="free_y", ncol=6)
 ```
 
-<img src="day1_complete_files/figure-gfm/cluster x variable boxplots-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/cluster%20x%20variable%20boxplots-1.png)<!-- -->
 
 We could actually run ANOVA models for each original variable of the
 form
@@ -1111,15 +1013,12 @@ form
 and extract cluster mean and pairwise comparison to understand what
 variables had significant differences among clusters.
 
-<p align="center">
-
 ``` r
 fviz_cluster(mod_km2, 
              data = mvadf_wnn)
 ```
 
-<img src="day1_complete_files/figure-gfm/kmeans PCA plot-1.png" style="display: block; margin: auto;" />
-</p>
+![](day1_complete_files/figure-gfm/kmeans%20PCA%20plot-1.png)<!-- -->
 
 Notice how, behind the scenes, the fviz\_cluster function ran a PCA and
 is showing us a plot with PCs 1 and 2 on the axis (same result as we
