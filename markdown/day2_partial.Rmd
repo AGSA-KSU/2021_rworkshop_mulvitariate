@@ -22,7 +22,7 @@ packages("scales", "mlbench", "kernlab", "sessioninfo") # MISC
 
 # SAVE
 #save.image(file = "randomforests.RData")
-load(file = "randomforests.RData")
+#load(file = "randomforests.RData")
 
 ```
 
@@ -562,7 +562,7 @@ rf.imp = RF_varimp %>% ggplot()+
 rf.imp
 
 ```
-## CF importance
+## CF VarImportance
 ```{r warning = FALSE, message = FALSE}
 ### OPTION 1. Measure importance in entire dataset
 cf_final <-  party::cforest(GY~.,
@@ -606,6 +606,13 @@ cf.imp = CF_varimp %>% ggplot()+
   theme_bw()
 
 cf.imp
+
+View(RF_varimp)
+
+#write_csv(RF_varimp %>% unnest(YEAR), file = "RF_varimp.csv")
+#write_csv(CF_varimp %>% unnest(YEAR), file = "CF_varimp.csv")
+
+#View(RF_varimp %>% unnest(YEAR))
 
 ```
 
