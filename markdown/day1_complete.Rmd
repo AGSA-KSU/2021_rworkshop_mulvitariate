@@ -4,7 +4,7 @@ output:
   html_document: 
     keep_md: yes
     toc: yes
-    toc_float: true
+    #toc_float: true
     number_sections: yes
 ---
 
