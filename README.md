@@ -21,9 +21,14 @@ The workshop was divided into 2 days:
 
 2. Unzip the repository, launch the RStudio project (by clicking on the "*2021_rworkshop_ksu.Rproj*" file).  
 
-3. On RStudio, go to the "*Files*" tab (lower right), click on folder "*markdown*", and open file "*day1_partiallyfilled.Rmd*".  
+3. On RStudio, go to the "*Files*" tab (lower right), click on folder "*markdown*", and open file 
+    - "*day1_partiallyfilled.Rmd*" for day 1  
+    - "*day2_partial.Rmd*" for day 2  
 
-4. You can code along with us by wathcing [this](https://www.youtube.com/watch?v=JsTQctso1nM&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6) YouTube video.  
+4. You can code along with us by watching the following YouTube videos:  
+  - [day 1](https://www.youtube.com/watch?v=JsTQctso1nM&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6)  
+  - [day 2](https://www.youtube.com/watch?v=fYv4uxSKp-o&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6)  
+  
 
 
 
