@@ -13,7 +13,7 @@ output:
 
 - The workshop today will run from 2h, and it will be recorded and made available later on the AGSA youtube channel.  
 
-- The complete script will be made available later tonight on the same GitHug page shared via email earlier.  
+- The complete script will be made available later tonight on the same GitHub page shared via email earlier.  
 
 - This is an advanced workshop and assumes you already have knowledge about:  
     - RStudio projects  
