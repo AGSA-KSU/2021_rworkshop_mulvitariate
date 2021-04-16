@@ -27,9 +27,3 @@ The workshop was divided into 2 days:
 
 
 
-This repository contains the following sub-folders:  
-- **data**: contains the data file that will be used for the analysis.  
-- **markdown**: contains the R markdown files with the code for the workshop. At download, only partially filled code will be shared, with completely filled scripts shared after the workshop.  
-- **output**: contains graphs outputted during the analysis.  
-
-
