@@ -1,0 +1,830 @@
+---
+title: "Regression Trees & Random Forests in R"
+author: "Adrian Correndo"
+date: "04/16/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+# Libraries
+```{r warning=F, message=F}
+library(easypackages)
+packages("tidyverse", "magrittr", "purrr") # Data wrangling and gral. plots
+packages("rpart", "rpart.plot", "partykit")
+packages("randomForest") # Random Forests
+#package("party")# Conditional Forests
+packages("ggparty") # Plot conditional trees
+packages("Metrics","Fgmutils") # Performance metrics
+packages("rsample") # Cross validation
+packages("scales", "mlbench", "kernlab", "sessioninfo") # MISC
+
+
+# SAVE
+#save.image(file = "randomforests.RData")
+#load(file = "randomforests.RData")
+
+```
+
+# DATA
+```{r warning=F, message=F}
+mvadf <- read_csv("../data/data_R_MVA.csv")
+#readxl::read_excel("data_R_MVA.xlsx")
+View(mvadf)
+
+dataset = mvadf %>%
+  mutate_if(is.character, as.factor) # Transform Characters to Factors
+#View(dataset)
+
+# SEED
+set.seed(1)
+
+# Training partition
+# SINGLE data split
+# 50-50%
+index_train_50 = sample(1:nrow(dataset),0.5*nrow(dataset),replace = F)
+# 85-15%
+index_train_85 = sample(1:nrow(dataset),0.85*nrow(dataset),replace = F)
+
+# Training 1
+train_50 = dataset[index_train_50,]
+test_50 = dataset[-index_train_50,]
+
+# Training 2
+train_85 = dataset[index_train_85,]
+test_85 = dataset[-index_train_85,]
+
+#View(test_50)
+#View(test_85)
+```
+
+# RPART
+```{r warning=F, message=F}
+library(rpart)
+
+# RPART - Training 50%
+rpart_tree_50 = rpart(formula = GY ~., # yield as a function of everything else
+                   method = "anova", # anova for REGRESSION TREE. 
+                   data = train_50, # data
+                   control = rpart.control(# PRUNING
+                   cp = 0.001, # complexity parameter
+                   xval = 10, # k, folds for cross-validation
+                   maxdepth = 20, # level of branches (secondary, terc..)
+                   #minsplit = 100, # "n" to make a new split
+                   minbucket = 10 # "n" at a terminal node
+                   ) )
+
+# RPART - Training 85%
+rpart_tree_85 = rpart(data = train_85, formula = GY~., method = "anova", control = rpart.control(cp = 0.001, xval = 10, maxdepth = 20, minbucket = 10))
+
+# All the data
+rpart_tree_ALL = rpart(data = dataset, formula = GY~., method = "anova", control = rpart.control(cp = 0.001, xval = 10, maxdepth = 20, minbucket = 10))
+
+# Plot cross validation
+plotcp(rpart_tree_50)
+plotcp(rpart_tree_85)
+plotcp(rpart_tree_ALL)
+
+# Print results
+printcp(rpart_tree_50)
+printcp(rpart_tree_85)
+printcp(rpart_tree_ALL)
+
+# R2
+rsq.rpart(rpart_tree_50)
+
+# Update trees (PRUNE)
+pruned.rpart.50 = prune(rpart_tree_50, cp = 0.07)
+prp(pruned.rpart.50)
+
+pruned.rpart.85 = prune(rpart_tree_85, cp = 0.03)
+prp(pruned.rpart.85)
+
+pruned.rpart.ALL = prune(rpart_tree_ALL, cp = 0.03)
+prp(pruned.rpart.ALL)
+```
+
+# Plotting the RPART TREES
+```{r warning=F, message=F}
+# Training 1
+rpart.plot(pruned.rpart.50,main = "TREE - Train_50",
+           box.palette =c("#e07575", "#e0b575", "#e0e075","#e0e075","#7ad68b"),
+           digits = 2, 
+           extra = 101, # diplay percentage of observations in node
+           type = 2, # main layout (0-5)
+           under = TRUE, # text under node boxes
+           tweak = 2, # font size (proportion)
+           round = 0, branch.type = 0,
+           branch.lty = 1, # dotted branch lines
+           #shadow.col = "gray", # shadows under the node boxes
+           nn = TRUE) # display the node numbers
+
+# Training 2
+rpart.plot(pruned.rpart.85,main = "TREE - Train_85",
+           box.palette =c("#e07575", "#e0b575", "#e0e075","#e0e075","#7ad68b"),
+           digits = 2, 
+           extra = 101, # diplay percentage of observations in node
+           type = 2, # main layout (0-5)
+           under = TRUE, # text under node boxes
+           tweak = 2, # font size (proportion)
+           round = 0, branch.type = 0,
+           branch.lty = 1, # dotted branch lines
+           #shadow.col = "gray", # shadows under the node boxes
+           nn = TRUE) # display the node numbers
+
+# ALL data
+rpart.plot(pruned.rpart.ALL,main = "TREE - Entire dataset",
+           box.palette =c("#e07575", "#e0b575", "#e0e075","#e0e075","#7ad68b"),
+           digits = 2, 
+           extra = 101, # diplay percentage of observations in node
+           type = 2, # main layout (0-5)
+           under = TRUE, # text under node boxes
+           tweak = 2, # font size (proportion)
+           round = 0, branch.type = 0,
+           branch.lty = 1, # dotted branch lines
+           #shadow.col = "gray", # shadows under the node boxes
+           nn = TRUE) # display the node numbers
+
+
+```
+
+# CTREE
+```{r}
+# Training 50%
+library(partykit)
+
+ctree_50 = ctree(formula = GY~.,
+                 data = train_50,
+                 control = ctree_control( # PRUNE
+        alpha = 0.05, #Significance threshold for variable selection
+        splitstat = "quadratic", #criterion to get best-split point of continuous variables
+        testtype = "Univariate", #test to get p-values ("Univariate, Bonferroni, Monte Carlo"),
+        splittest = FALSE, # Logical, do you want to resample to test a split?
+        #testtype = "MonteCarlo", nresample = 99, 
+        maxdepth = 5, # level of branches (secondary, terc..)
+        #minsplit = 100, # "n" to make a new split
+        minbucket = 10 # "n" at a terminal node
+        ))
+
+# Training 85%
+ctree_85 = ctree(formula = GY~., data = train_85,
+      control = ctree_control(alpha = 0.05, #Significance threshold for variable selection
+        splitstat = "quadratic", #criterion to get best-split poing of continuous variables
+        testtype = "Univariate", #test to get p-values ("Univariate, Bonferroni, Monte Carlo"),
+        splittest = FALSE, # Logical, do you want to resample to test a split?
+        #testtype = "MonteCarlo", nresample = 99, 
+        maxdepth = 20, # level of branches (secondary, terc..)
+        #minsplit = 100, # "n" to make a new split
+        minbucket = 10 # "n" at a terminal node
+        ))
+
+# Entire dataset
+ctree_ALL = ctree(formula = GY~., data = dataset,
+      control = ctree_control(alpha = 0.05, #Significance threshold for variable selection
+        splitstat = "quadratic", #criterion to get best-split poing of continuous variables
+        testtype = "Univariate", #test to get p-values ("Univariate, Bonferroni, Monte Carlo"),
+        splittest = FALSE, # Logical, do you want to resample to test a split?
+        #testtype = "MonteCarlo", nresample = 99, 
+        maxdepth = 5, # level of branches (secondary, terc..)
+        #minsplit = 100, # "n" to make a new split
+        minbucket = 10 # "n" at a terminal node
+        ))
+
+# Summaries
+ctree_50
+ctree_85
+ctree_ALL
+```
+
+## Plotting CTREES
+```{r}
+# Training 50%
+plot(ctree_50, type = "extended", main = "CTREE - Train 50",
+     gp = gpar(fontsize = 6), 
+     inner_panel=node_inner(ctree_50,
+                            abbreviate = FALSE,            # short variable names
+                            pval = FALSE,                 # no p-values
+                            id = TRUE),                  # no id of node
+     terminal_panel = node_boxplot(ctree_50,fill = 'orange'))
+
+# Training 85%
+plot(ctree_85, type = "extended", main = "CTREE - Train 85",
+     gp = gpar(fontsize = 6), 
+     inner_panel=node_inner(ctree_85,
+                            abbreviate = FALSE,            # short variable names
+                            pval = FALSE,                 # no p-values
+                            id = TRUE),                  # no id of node
+     terminal_panel = node_boxplot(ctree_85,fill = 'green'))
+
+# Entire dataset
+plot(ctree_ALL, type = "extended", main = "CTREE - Entire dataset",
+     gp = gpar(fontsize = 6), 
+     inner_panel=node_inner(ctree_ALL,
+                            abbreviate = FALSE,            # short variable names
+                            pval = FALSE,                 # no p-values
+                            id = TRUE),                  # no id of node
+     terminal_panel = node_boxplot(ctree_ALL,fill = 'green'))
+
+
+```
+# Generalization Error
+```{r}
+# RPart performance R2
+cor(rpart.predict(rpart_tree_50,newdata=test_50), test_50$GY)^2
+cor(rpart.predict(rpart_tree_85,newdata=test_85), test_85$GY)^2
+
+# CTREE performance R2
+# Training 50
+cor(predict(ctree_50, newdata=test_50),test_50$GY)^2
+# Training 85
+cor(predict(ctree_85, newdata=test_85),test_85$GY)^2
+
+```
+# Clusters from Rpart
+```{r}
+# Create a column with number of node as factor
+nodes = rpart_tree_ALL$where
+
+data_tree_clusters = cbind(dataset,nodes)
+
+#View(data_tree_clusters)
+
+# ANOVA of GY using clusters as treatments
+summary(m <- lm(GY ~ nodes, data = data_tree_clusters))
+```
+
+# LOOCV - Rpart
+Leave-one-out cross validation
+(one observation out at a time)
+```{r warning=F, message=F}
+
+# rpart CROSS VALIDATION - LEAVE ONE OUT
+rparts_loocv = tibble(xx=1:nrow(dataset) %>% map(~.)) %>% 
+  mutate(model =  map(xx,function(x){
+    rpart(formula = GY~.,
+          method = "anova",
+          control = rpart.control(cp = 0.015,
+                                  maxdepth = 20,
+                                  minbucket = 10),                                            data = dataset[-x,])}))
+
+rparts_loocv = rparts_loocv %>%
+  mutate(PRED = map2(model,xx,~predict(.x,newdata = dataset[.y,])))
+
+# TARGET (Supervise with OBSERVED values)
+rparts_loocv = rparts_loocv %>% mutate(OBS = dataset$GY)
+
+# Plot
+rparts_loocv %>% mutate(PRED = PRED %>% unlist()) %>% select(OBS,PRED) %>% 
+  ggplot(aes(OBS,PRED))+
+  geom_point(color="black", fill="red", shape=21, size=5)+
+  geom_abline()+
+  scale_x_continuous(limits = c(0,7000))+
+  scale_y_continuous(limits = c(0,7000))
+
+OP_rparts_loocv = rparts_loocv %>% mutate(PRED = PRED %>% unlist()) %>% select(OBS,PRED)
+
+# RMSE
+RMSE_rpart_loocv = Metrics::rmse(OP_rparts_loocv$OBS,OP_rparts_loocv$PRED)
+RMSE_rpart_loocv
+
+# MEAN BIAS ERROR
+MBE_rpart_loocv = Metrics::bias(OP_rparts_loocv$OBS,OP_rparts_loocv$PRED)
+MBE_rpart_loocv
+
+# R2
+R2_rpart_loocv = cor(OP_rparts_loocv$OBS,OP_rparts_loocv$PRED)^2
+R2_rpart_loocv
+
+# RRMSE (relative to the mean of Observed values)
+# Weird RRMSE values of Fgmutils, better if you can use manual functions
+Fgmutils::rrmse(OP_rparts_loocv$OBS,OP_rparts_loocv$PRED)
+
+# MANUAL DEFINITION
+# Relative Root Mean Square Error (to Observed mean)
+RRMSE <- function(Obs,Pre){sqrt((sum((Obs-Pre)^2)/length(Obs))) / mean(Obs)}
+# RRMSE
+RRMSE_rpart_loocv = RRMSE(Obs = OP_rparts_loocv$OBS,
+                          Pre = OP_rparts_loocv$PRED)
+RRMSE_rpart_loocv
+
+```
+
+# LOOCV - CTrees
+```{r warning=F, message=F}
+
+# CTREE CROSS VALIDATION - LEAVE ONE OUT
+ctrees_loocv = tibble(xx=1:nrow(dataset) %>% map(~.)) %>% 
+  mutate(model =  map(xx,function(x){
+    ctree(GY~.,
+          control = ctree_control(alpha = 0.01,
+                                  maxdepth = 10, # Best params
+                                  minbucket = 10),                                            data = dataset[-x,])}))
+
+ctrees_loocv = ctrees_loocv %>%
+  mutate(PRED = map2(model,xx,~predict(.x,newdata = dataset[.y,])))
+
+# TARGET (Supervise with OBSERVED values)
+ctrees_loocv = ctrees_loocv %>% mutate(OBS = dataset$GY)
+
+# Plot
+ctrees_loocv %>% mutate(PRED = PRED %>% unlist()) %>% select(OBS,PRED) %>% 
+  ggplot(aes(OBS,PRED))+
+  geom_point(color="black", fill="red", shape=21, size=5)+
+  geom_abline()+
+  scale_x_continuous(limits = c(0,7000))+
+  scale_y_continuous(limits = c(0,7000))
+
+OP_ctrees_loocv = ctrees_loocv %>% mutate(PRED = PRED %>% unlist()) %>% select(OBS,PRED)
+
+# RMSE
+RMSE_ctree_loocv = Metrics::rmse(OP_ctrees_loocv$OBS,OP_ctrees_loocv$PRED)
+RMSE_ctree_loocv
+
+# RRMSE (relative to the mean of Observed values)
+RRMSE_ctree_loocv = RRMSE(Obs = OP_rparts_loocv$OBS,
+                          Pre = OP_rparts_loocv$PRED)
+RRMSE_ctree_loocv
+
+# MEAN BIAS ERROR
+MBE_ctree_loocv = Metrics::bias(OP_ctrees_loocv$OBS,OP_ctrees_loocv$PRED)
+MBE_ctree_loocv
+
+# R2
+R2_ctree_loocv = cor(OP_ctrees_loocv$OBS,OP_ctrees_loocv$PRED)^2
+R2_ctree_loocv
+
+```
+
+# LOGOCV
+Leave One Group Out Cross Validation
+Typically "YEAR" is of interest
+```{r}
+
+dataset.year = dataset %>%
+  mutate(YEAR = floor(runif(length(.$GY), min = 2010, max = 2020)))
+#View(dataset.year)
+
+#1. Create partitioning
+logocv = group_vfold_cv(data = dataset.year, group = YEAR, repeats = 1) %>% group_by(id) %>%
+  mutate(dtraining = purrr::map(splits, ~as.data.frame(analysis(.x)))) %>%
+  mutate(dtesting = purrr::map(splits, ~as.data.frame(assessment(.x)))) %>%
+  dplyr::select(-splits) %>% 
+#rf_logocv$folds = c(1:10)
+  mutate(folds = map(dtesting, ~mean(.$YEAR)))
+
+#View(logocv)
+```
+
+### TREE Generalization Error
+``` {r}
+#2. Create function to extract OOB metrics from models
+metrics.fun <- function(x){ x %>% group_by(folds) %>%
+      mutate(observed = purrr::map(dtesting,~.$GY),
+             predicted = purrr::map2(models,dtesting,~predict(.x,newdata=.y)),
+             rmse = purrr::map2(observed,predicted,
+                                ~Metrics::rmse(.x,.y)) %>% unlist(),
+             r2 = purrr::map2(observed,predicted,~cor(.x,.y)^2) %>% unlist()) %>%
+      dplyr::select(observed, predicted, rmse, r2)}
+
+#3. Run the models
+rpart.models = logocv %>%
+ mutate(models = pmap(list(dtraining),
+            function(dtraining){
+              rpart(data = dtraining,
+                    formula = GY~., method = "anova",
+                    control = rpart.control(cp = 0.01,
+                                            maxdepth = 20,
+                                            minbucket = 10))
+                } ) )
+
+ctree.models = logocv %>%
+ mutate(models = pmap(list(dtraining),
+            function(dtraining){
+              ctree(formula = GY~., data = dtraining,
+      control = ctree_control(
+        alpha = 0.05, splitstat = "quadratic", testtype = "Univariate",
+        splittest = FALSE, maxdepth = 10,minbucket = 10))
+                } ) )
+
+
+#View(tree.models)
+
+# Obtaining Metrics 
+rpart.metrics = rpart.models %>% metrics.fun
+ctree.metrics = ctree.models %>% metrics.fun
+
+# PvO plot Rpart
+rpart.metrics %>% unnest(c(observed,predicted)) %>%
+  mutate_if(is.double,as.numeric) %>% 
+  ggplot(aes(x=observed, y= predicted ))+
+  geom_point(size = 2, shape = 21, alpha = 0.5, fill = "red")+
+  geom_abline()+
+  labs(y = bquote("Predicted"),
+       x = bquote("Observed"))+
+  scale_x_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  scale_y_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  theme_bw()+
+  theme(axis.text.y = element_text(size = rel(1)),
+        axis.text.x = element_text(size = rel(1), angle = 90),
+        strip.text = element_text(size = rel(1.25)),
+        axis.title = element_text(size = rel(1.25), face = "bold"),
+        legend.position = "none",
+        aspect.ratio = 1)
+
+# PvO plot Ctree
+ctree.metrics %>% unnest(c(observed,predicted)) %>%
+  mutate_if(is.double,as.numeric) %>% 
+  ggplot(aes(x=observed, y= predicted ))+
+  geom_point(size = 2, shape = 21, alpha = 0.5, fill = "blue")+
+  geom_abline()+
+  labs(y = bquote("Predicted"),
+       x = bquote("Observed"))+
+  scale_x_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  scale_y_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  theme_bw()+
+  theme(axis.text.y = element_text(size = rel(1)),
+        axis.text.x = element_text(size = rel(1), angle = 90),
+        strip.text = element_text(size = rel(1.25)),
+        axis.title = element_text(size = rel(1.25), face = "bold"),
+        legend.position = "none",
+        aspect.ratio = 1)
+
+
+rpart.metrics
+
+ctree.metrics
+
+```
+# RANDOM FORESTS
+
+### RF Generalization Error
+``` {r warning=F, message=F}
+# Run the models
+rf.models = logocv %>%
+ mutate(models = pmap(list(dtraining),
+            function(dtraining){
+              randomForest(formula = GY~.,
+                           data = dtraining,
+               ntree = 600, #rf.best.tune$ntree,
+               mtry = 8 #rf.best.tune$mtry,
+               )
+                } ) )
+
+#View(rf.models)
+
+# Obtaining Metrics 
+rf.metrics = rf.models %>% metrics.fun
+
+#View(rf.metrics)
+
+# PvO plot
+rf.metrics %>% unnest(c(observed,predicted, folds)) %>%
+  mutate(YEAR = as.factor(folds)) %>% 
+  ggplot(aes(x=observed, y= predicted))+
+  geom_point(size = 2, shape = 21, alpha = 0.5, aes(fill = YEAR))+
+  #stat_density_2d(geom="polygon", alpha=0.75,aes(fill = after_stat(level)))+
+  geom_density_2d(size=0.25, colour = "forest green")+
+  geom_abline()+
+  labs(y = bquote("Predicted"),
+       x = bquote("Observed"))+
+  scale_x_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  scale_y_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  theme_bw()+
+  theme(axis.text.y = element_text(size = rel(1)),
+        axis.text.x = element_text(size = rel(1), angle = 90),
+        strip.text = element_text(size = rel(1.25)),
+        axis.title = element_text(size = rel(1.25), face = "bold"),
+        legend.position = "top",
+        aspect.ratio = 1)
+
+```
+### CF Generalization Error
+``` {r warning=F, message=F}
+# Run the models
+cf.models = logocv %>%
+ mutate(models = pmap(list(dtraining),
+            function(dtraining){
+            party::cforest(GY~.,
+                           data=dataset,
+                           control = party::cforest_control(
+                             ntree=400,
+                             mtry=8,
+                             mincriterion = 0.95))
+                } ) )
+
+#View(cf.models)
+
+# Obtaining Metrics 
+cf.metrics = cf.models %>% metrics.fun
+
+#View(cf.metrics)
+
+# PvO plot
+cf.metrics %>% unnest(c(observed,predicted, folds)) %>%
+  mutate(YEAR = as.factor(folds)) %>% 
+  ggplot(aes(x=observed, y= predicted))+
+  geom_point(size = 2, shape = 21, alpha = 0.5, aes(fill = YEAR))+
+  #stat_density_2d(geom="polygon", alpha=0.75,aes(fill = after_stat(level)))+
+  geom_density_2d(size=0.25, colour = "forest green")+
+  geom_abline()+
+  labs(y = bquote("Predicted"),
+       x = bquote("Observed"))+
+  scale_x_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  scale_y_continuous(breaks=seq(0,7000, by=1000), limits = c(0,7000))+
+  theme_bw()+
+  theme(axis.text.y = element_text(size = rel(1)),
+        axis.text.x = element_text(size = rel(1), angle = 90),
+        strip.text = element_text(size = rel(1.25)),
+        axis.title = element_text(size = rel(1.25), face = "bold"),
+        legend.position = "none",
+        aspect.ratio = 1)
+
+```
+## RF VarImportance 
+```{r warning=F, message=FALSE}
+# Random Forest Explainer
+packages("randomForestExplainer")
+packages("permimp")
+
+final.RF <- randomForest(GY~., data = dataset,
+               ntree = 600,
+               mtry = 8,
+               localImp=TRUE)
+
+# Plots
+randomForest::varImpPlot(final.RF)
+
+# 2D plot
+plot_multi_way_importance(final.RF,
+                          x_measure = "mse_increase",
+                          y_measure = "node_purity_increase",
+                          no_of_labels = 5)
+
+### OPTION 2. Measure importance at each of the 10 YEAR-folds
+RF_varimp = logocv %>% dplyr::select(folds, dtraining) %>%
+  group_by(folds) %>% 
+  mutate(rf.models =  map(dtraining,
+                          ~randomForest(GY~., data = .,
+                                        ntree = 600,
+                                        mtry = 8) ) ) %>% 
+  #mutate(varimp = map(rf.models, ~rownames_to_column(as.data.frame(importance(.)),"Feature"))) %>%
+  mutate(imp = map(rf.models, ~tibble::rownames_to_column(as.data.frame(permimp(final.RF, conditional = FALSE)[[1]]),'var'))) %>% 
+  dplyr::select(-rf.models, -dtraining) %>% unnest(cols = c('imp')) %>% set_colnames(c('folds','YEAR','var','imp'))
+
+#View(RF_varimp)
+
+# Plot
+rf.imp = RF_varimp %>% ggplot()+
+ geom_boxplot(aes(x=imp, y=fct_reorder(var, imp)), fill = "orange")+
+  #scale_x_continuous(breaks=seq(0.5,3, by=0.5), limits=c(0.4,3))+
+  labs(title = "randomForest", x = 'MSE increase', y = "Feature")+
+  theme_bw()
+
+rf.imp
+
+```
+## CF VarImportance
+```{r warning = FALSE, message = FALSE}
+### OPTION 1. Measure importance in entire dataset
+cf_final <-  party::cforest(GY~.,
+                            data=dataset, 
+                        control = party::cforest_control(ntree=400,
+                                                         mtry=8,
+                                                         mincriterion = 0.05))
+
+# Conditional permutation importance (Strobl et al. 2008)
+# Give exactly the same results than varimp() from party but more efficient
+cimp.cf.final = as.data.frame(permimp(cf_final, conditional = TRUE, asParty=TRUE)[[1]])
+colnames(cimp.cf.final) = c("imp")
+cimp.cf.final <- tibble::rownames_to_column(cimp.cf.final, "Feature") %>% mutate(CIMP = abs(imp))
+
+#View(cimp.cf.final)
+
+# Plot
+cimp.cf.final %>% ggplot()+
+ geom_point(aes(x=CIMP, y=fct_reorder(Feature, CIMP)), fill = "palegreen")+
+  labs(title = "cforest",x = 'Conditional Importance', y = "Feature")+
+  theme_bw()
+
+### OPTION 2. Measure importance at each of the outer 10 folds
+CF_varimp = logocv %>% dplyr::select(folds, dtraining) %>%
+  group_by(folds) %>% 
+  mutate(cimp.models =  map(dtraining, function(x){
+  party::cforest(GY~., data = x,
+               control = party::cforest_unbiased(
+                 ntree = 400,
+                 mtry = 8))}) ) %>% 
+  mutate(cimp = map(cimp.models, ~tibble::rownames_to_column(as.data.frame(permimp(.x, conditional = TRUE, asParty=TRUE)[[1]], "var")))) %>%
+  dplyr::select(-cimp.models, -dtraining) %>% unnest(cols = c('cimp'))# %>%  
+#View(CF_varimp)
+CF_varimp = CF_varimp %>% set_colnames(c('folds','YEAR','var','cimp'))
+
+#save.image(file = "Ymax_RF_CF_XGB.RData")
+
+cf.imp = CF_varimp %>% ggplot()+
+ geom_boxplot(aes(x=cimp, y=fct_reorder(var, cimp)), fill = "palegreen")+
+  labs(title = "cforest",x = 'Conditional Importance', y = "Feature")+
+  theme_bw()
+
+cf.imp
+
+View(RF_varimp)
+
+#write_csv(RF_varimp %>% unnest(YEAR), file = "RF_varimp.csv")
+#write_csv(CF_varimp %>% unnest(YEAR), file = "CF_varimp.csv")
+
+#View(RF_varimp %>% unnest(YEAR))
+
+```
+
+# Hyper-parameters tune
+## Nested Cross-validation
+```{r}
+set.seed(24)
+
+#rfolds = floor(runif(10, min=1, max=1090))
+
+# Get the outer loops
+nested_cv = rsample::nested_cv(data=dataset,
+                   outside = vfold_cv(v=5,repeats = 1),
+                   inside = vfold_cv(v=3,repeats = 1)) %>% 
+  mutate(train.out = map(seq(1,5,by=1), ~as.data.frame(splits[[.]], data = "analysis"))) %>% 
+  mutate(test.out = map(seq(1,5,by=1), ~as.data.frame(splits[[.]], data = "assessment"))) 
+nested_cv$folds = c(1:5)
+
+#View(nested_cv)
+
+# Get the inner loops
+inner_loop = nested_cv %>% dplyr::select(id, inner_resamples) %>% unnest() %>%
+  set_colnames(c("id.out", "splits", "id.in")) %>% group_by(id.out) %>%
+  mutate(train.in = map(id.out,~as.data.frame(splits[[.]], data = "analysis"))) %>% 
+  mutate(test.in = map(id.out,~as.data.frame(splits[[.]], data = "assessment")))
+inner_loop$folds = c(1:15)
+
+```
+# RF Hyper-par tune
+```{r warning=F, message=FALSE}
+
+#1 Create the grid of hyperparameters
+  rf.tune.grid <- expand.grid(
+    ntree = c(200,400,600,800),
+    mtry = c(6,8,10,15),
+    folds = seq(1,15,by=1))
+
+#View(rf.tune.grid)
+
+#2 Write the models' functions
+# randonForest()
+RF <- function(ntree,mtry,dtraining){
+  # the "pb$tick" allows to get a progress bar of the run
+  pb$tick()$print();
+  randomForest::randomForest(formula = GY ~.,
+                             data = dtraining,
+                             ntree = ntree,
+                             mtry = mtry)}
+
+#3 Call the GRID to get the progress bar
+n = nrow(rf.tune.grid)
+pb <- progress_estimated(n)
+n
+
+#4 Pipe the hyperp Grid and left join the folds "unlisted"
+test = rf.tune.grid %>%
+  left_join(inner_loop %>%
+              dplyr::select(train.in, test.in, id.in, id.out, folds) %>%
+              mutate(folds = folds %>% unlist), by="folds")
+# Create a "vector" of models
+n
+
+rf.test = test %>% mutate(rf.models =
+           purrr::pmap(list(ntree,mtry,train.in),RF))
+
+#View(rf.test)
+
+# RF Metrics for tuning
+rf_tune_metrics = rf.test %>% group_by(folds) %>%
+  mutate(observed = map(dtesting,~.$GY)) %>%
+  mutate(predicted = map2(rf.models,
+                          dtesting,function(x,y){predict(x,y)})) %>%
+  mutate(rmse = map2(observed,predicted,~Metrics::rmse(.x,.y)) %>%
+           unlist())  %>%
+  mutate(bias = map2(observed,predicted,~Metrics::bias(.x,.y)) %>%
+           unlist()) %>%
+  mutate(mae = map2(observed,predicted,~Metrics::mae(.x,.y)) %>%
+           unlist()) %>%
+  mutate(r2 = map2(observed,predicted,~cor(.x,.y)^2) %>%
+           unlist()) %>% dplyr::select(-rf.models)
+
+# Remove to release RAM space
+#remove(rf.test)
+
+## PLOT RMSE by Hyper-pars combinations
+
+rf_tunning = rf_tune %>% 
+  ggplot(aes(x=ntree, y = RMSE.mean))+
+  geom_point(size=2,aes(col=as.character(mtry),shape=as.character(mtry)))+
+  geom_line(aes(col=as.character(mtry)))+
+  scale_color_manual(name="mtry", values = c("red","orange","dark green"), guide='legend')+
+  scale_shape_manual(name="mtry", values = c(21,22,23), guide='legend')+
+  geom_errorbar(aes(ymin = RMSE.mean - RMSE.sd,ymax = RMSE.mean + RMSE.sd,                col=as.character(mtry)),width=0.25)+
+  #scale_y_continuous(breaks=seq(1.4,2.6, by=0.1), limits = c(1.4,2.6))+
+  labs(x="ntree", y=bquote("randomForest() cv-RMSE (kg"~ha^-1*")"))+
+  theme_bw()+
+  theme(axis.text = element_text(size = rel(0.75)),
+        strip.text = element_text(size = rel(0.75)),
+        axis.title = element_text(size = rel(0.75), face = "bold"),
+        legend.position = "top")
+
+rf_tunning 
+
+# Summarize
+## Get the best tune
+rf.best.tune = rf_tune_metrics %>% group_by(ntree, mtry, nodesize) %>% summarise(RMSE.mean = mean(rmse), R2.mean = mean(r2)) %>% ungroup() %>% filter(RMSE.mean == min(RMSE.mean))
+rm(rf_tune_metrics)
+
+
+```
+# CF Hyper-par tune
+```{r warning=F, message=FALSE}
+
+#1 Create the grid of hyperparameters
+cf.tune.grid <- expand.grid(
+  ntree = c(200,400),
+  mtry = c(6,8),
+  folds = seq(1,15,by=1))
+
+#View(cf.tune.grid)
+
+#2 Write the models' functions
+# Conditional Forest()
+CF <- function(x,y,f){
+  # the "pb$tick" allows to get a progress bar of the run
+  pb$tick()$print();party::cforest(Ymax~., data = f %>% mutate_at(vars("iRR", "PC", "TILL"), as.factor),
+                                   control = cforest_unbiased(ntree = x,
+                                   mtry = y))}
+
+#3 Call the GRID to get the progress bar
+n = nrow(cf.tune.grid)
+pb <- progress_estimated(n)
+n
+
+#4 Pipe the hyperp Grid and left join the folds "unlisted"
+test = cf.tune.grid %>%
+  left_join(inner_loop %>%
+              dplyr::select(train.in, test.in, id.in, id.out, folds) %>%
+              mutate(folds = folds %>% unlist), by="folds")
+# Create a "vector" of models
+n
+
+cf.test = test %>% mutate(cf.models =
+           purrr::pmap(list(ntree,mtry,train.in),cf))
+
+#View(cf.test)
+
+# cf Metrics for tuning
+cf_tune_metrics = cf.test %>% group_by(folds) %>%
+  mutate(observed = map(dtesting,~.$GY)) %>%
+  mutate(predicted = map2(cf.models,
+                          dtesting,function(x,y){predict(x,y)})) %>%
+  mutate(rmse = map2(observed,predicted,~Metrics::rmse(.x,.y)) %>%
+           unlist())  %>%
+  mutate(bias = map2(observed,predicted,~Metrics::bias(.x,.y)) %>%
+           unlist()) %>%
+  mutate(mae = map2(observed,predicted,~Metrics::mae(.x,.y)) %>%
+           unlist()) %>%
+  mutate(r2 = map2(observed,predicted,~cor(.x,.y)^2) %>%
+           unlist()) %>% dplyr::select(-cf.models)
+
+# Remove to release RAM space
+#remove(cf.test)
+
+## PLOT RMSE by Hyper-pars combinations
+
+cf_tunning = cf_tune %>% 
+  ggplot(aes(x=ntree, y = RMSE.mean))+
+  geom_point(size=2,aes(col=as.character(mtry),shape=as.character(mtry)))+
+  geom_line(aes(col=as.character(mtry)))+
+  scale_color_manual(name="mtry", values = c("red","orange","dark green"), guide='legend')+
+  scale_shape_manual(name="mtry", values = c(21,22,23), guide='legend')+
+  geom_errorbar(aes(ymin = RMSE.mean - RMSE.sd,ymax = RMSE.mean + RMSE.sd,                col=as.character(mtry)),width=0.25)+
+  #scale_y_continuous(breaks=seq(1.4,2.6, by=0.1), limits = c(1.4,2.6))+
+  labs(x="ntree", y=bquote("randomForest() cv-RMSE (kg"~ha^-1*")"))+
+  theme_bw()+
+  theme(axis.text = element_text(size = rel(0.75)),
+        strip.text = element_text(size = rel(0.75)),
+        axis.title = element_text(size = rel(0.75), face = "bold"),
+        legend.position = "top")
+
+cf_tunning 
+
+# Summarize
+## Get the best tune
+cf.best.tune = cf_tune_metrics %>% group_by(ntree, mtry, nodesize) %>% summarise(RMSE.mean = mean(rmse), R2.mean = mean(r2)) %>% ungroup() %>% filter(RMSE.mean == min(RMSE.mean))
+rm(cf_tune_metrics)
+
+
+```
+
+
+
