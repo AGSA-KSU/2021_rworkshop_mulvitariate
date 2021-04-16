@@ -1,4 +1,4 @@
-# 2021-rworkshop-multivariate  
+# Multivariate analysis in R Workshop  
 
 Hey there!  
 
@@ -14,6 +14,18 @@ The workshop was divided into 2 days:
     - Conditional inference tree  
     - Random forest  
     - Training/validating/testing predictive models  
+
+**Interesting in "attending" the workshop?**  
+
+1. Download this repository (click on the green "Code" button above and select "*Download ZIP*")  
+
+2. Unzip the repository, launch the RStudio project (by clicking on the "*2021_rworkshop_ksu.Rproj*" file).  
+
+3. On RStudio, go to the "*Files*" tab (lower right), click on folder "*markdown*", and open file "*day1_partiallyfilled.Rmd*".  
+
+4. You can code along with us by wathcing [this](https://www.youtube.com/watch?v=JsTQctso1nM&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6) YouTube video.  
+
+
 
 This repository contains the following sub-folders:  
 - **data**: contains the data file that will be used for the analysis.  
