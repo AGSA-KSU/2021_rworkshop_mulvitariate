@@ -15,7 +15,7 @@ The workshop was divided into 2 days:
     - Random forest  
     - Training/validating/testing predictive models  
 
-**Interesting in "attending" the workshop?**  
+## **Interesting in "attending" the workshop?**  
 
 1. Download this repository (click on the green "Code" button above and select "*Download ZIP*")  
 
@@ -26,8 +26,8 @@ The workshop was divided into 2 days:
     - "*day2_partial.Rmd*" for day 2  
 
 4. You can code along with us by watching the following YouTube videos:  
-  - [day 1](https://www.youtube.com/watch?v=JsTQctso1nM&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6)  
-  - [day 2](https://www.youtube.com/watch?v=fYv4uxSKp-o&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6)  
+   - [day 1](https://www.youtube.com/watch?v=JsTQctso1nM&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6)  
+   - [day 2](https://www.youtube.com/watch?v=fYv4uxSKp-o&list=PL1uGGoCGo1lZ_LniV0_aiPNJUKny1j0Kv&index=6)  
   
 
 
